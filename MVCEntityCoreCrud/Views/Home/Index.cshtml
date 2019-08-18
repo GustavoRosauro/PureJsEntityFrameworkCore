@@ -1,0 +1,91 @@
+﻿@{
+    ViewData["Title"] = "Home Page";
+}
+<label>Nome</label>
+<input id="nome" class="form-control" />
+<label>Idade</label>
+<input id="idade" class="form-control" />
+<button class="btn btn-success" id="btnButton">salvar</button>
+<br>
+<button class="btn btn-info" id="btnPesquisa">Pesquisar</button>
+<div class="col-md-12">
+    <table class="table">
+        <tr>
+            <th>Nome</th>
+            <th>Idade</th>
+        </tr>
+        <tbody id="tabela"></tbody>
+    </table>
+</div>
+<script>
+    let idGeral = 0;
+    let nome = document.getElementById('nome');
+    let idade = document.getElementById('idade');
+    let button = document.getElementById('btnButton');
+    let buttonPesquisa = document.getElementById('btnPesquisa');
+    let tabela = document.getElementById('tabela');
+    button.addEventListener('click', () => {
+        let xml = new XMLHttpRequest();
+        if (idGeral === 0) {
+            xml.open('POST', `/Home/InserrirNovoUsuario?nome=${nome.value}&idade=${idade.value}`, true);
+            xml.onreadystatechange = () => {
+                if (xml.readyState === 4 && xml.status === 200) {
+                    nome.value = "";
+                    idade.value = "";
+                    CarregarUsuarios();
+                }
+            };
+            xml.send();
+        } else {
+            let xml = new XMLHttpRequest();
+            xml.open('PUT', `/Home/AlterarRegistro?id=${idGeral}&nome=${nome.value}&idade=${idade.value}`);
+            xml.onreadystatechange = () => {
+                if (xml.readyState === 4 && xml.status === 200) {
+                    CarregarUsuarios();
+                }
+            }
+            xml.send();
+        }
+    });
+    buttonPesquisa.addEventListener('click', () => {
+        CarregarUsuarios();
+    });
+    function Deletar(id) {
+        let xml = new XMLHttpRequest();
+        xml.open('POST', `/Home/DeletarRegistro?id=${id}`, true);
+        xml.onreadystatechange = () => {
+            if (xml.readyState === 4 && xml.status === 200) {
+                CarregarUsuarios();
+            }
+        }
+        xml.send();
+    }
+    function CarregarUsuarios() {
+        let xml = new XMLHttpRequest();
+        tabela.innerHTML = "";
+        xml.open('GET', '/Home/UsersList', true);
+        xml.onreadystatechange = () => {
+            if (xml.readyState === 4 && xml.status === 200) {
+                let usuario = JSON.parse(xml.responseText);
+                for (let i = 0; i < usuario.length; i++) {
+                    tabela.innerHTML += `<tr><td>${usuario[i].nome}</td><td>${usuario[i].idade}</td><td><button class='btn btn-danger' onClick='Deletar(${usuario[i].id})'>Deletar</button></td><td><button class='btn btn-warning' onClick='CarregarUsuario(${usuario[i].id})'>Alterar</button></td></tr>`;
+                }
+            }
+        }
+        xml.send();
+    }
+    function CarregarUsuario(id) {
+        let xml = new XMLHttpRequest();
+        xml.open('GET', `/Home/ReturUser?id=${id}`, true);
+        xml.onreadystatechange = () => {
+            if (xml.readyState === 4 && xml.status === 200) {
+                let usuario = JSON.parse(xml.responseText);
+                nome.value = usuario.nome;
+                idade.value = usuario.idade;
+                idGeral = id;
+                button.innerText = 'Alterar'
+            }
+        }
+        xml.send();
+    }
+</script>
